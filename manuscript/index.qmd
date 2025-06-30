@@ -67,7 +67,6 @@ Se quiser, posso transformar esse conteúdo em uma versão mais formal (para con
 
 ![](./images/by-nc-sa.jpg)
 
-This book is licensed under the [CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/) license.
-
+Este livro é licenciado sob a licença [CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/).
 
 :::
