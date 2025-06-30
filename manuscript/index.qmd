@@ -1,0 +1,73 @@
+# Sobre o Livro {-}
+
+## Disclaimer
+
+Esta versão do livro é uma tradução feita por [Mateus Toledo](https://www.linkedin.com/in/mateus-toledo/) com muito carinho e rigor ténico. Caso queira ler no idioma original (inglês) você pode clicar [aqui](https://christophm.github.io/interpretable-ml-book/)
+
+
+## Sumário
+
+Aprendizado de Máquina (AM) (ou Machine Learning (ML)) já faz parte de nossos produtos, processos e pesquisa.
+Contudo, os **computadores geralmente não explicam suas predições**, o que pode causar muitos problemas, desde falta de confiança até erros que passam despercebidos.
+Esse livro é sobre fazer modelos de machine learning e suas decisões interpretáveis.
+
+Depois de explorar os conceitos de interpretabilidade, você irá aprender conceitos simples de modelos interpretáveis como árvores de decisões e regressão linear.
+O foco do livro está em métodos independentes de modelo (model-agnostic) para **interpretar modelos de caixa-preta**.
+Alguns destes métodos como o LIME e os valores Shapley podem ser usados para explicar predições individuais, enquanto outros métodos como a Importância da Característica por Permutação (permutation feature importance) e Efeitos Locais Acumulados (Accumulated Local Effects - ALE) podem ser usados para gerar insights sobre a relação geral entre Características (features) e previsões.
+Além disso, o livro apresenta métodos específicos para Redes Neurais Profundas (Deep Neural Networks).
+
+Todos os métodos de interpretação são explicados em produndidade e discutidos de forma crítica.
+Como eles funcionam?
+Quais são seus pontos fortes e fracos?
+Como você deve interpretá-los?
+Esse livro vai te capacitar a selecionar e aplicar corretamente o método de interpretação que faça mais sentido à sua aplicação de machine learning.
+A leitura do livro é recomendada para praticantes de machine learning, cientistas de dados, estatísticos, e para qualquer um interessado em fazer os modelos de machine learning interpretáveis.
+
+## Por que eu escrevi o livro?
+Este livro começou como um projeto paralelo enquanto eu trabalhava como estatístico em pesquisas clínicas.
+Nos meus dias livres, eu explorava temas que me interessavam, e o aprendizado de máquina interpretável acabou capturando minha atenção.
+Esperando encontrar muitos recursos sobre como interpretar modelos de machine learning, fiquei surpreso ao descobrir apenas artigos de pesquisa dispersos e postagens em blogs — nenhum guia completo.
+Isso me motivou a criar o recurso que eu gostaria que existisse — um livro para aprofundar meu próprio entendimento e compartilhar esse conhecimento com outras pessoas.
+Hoje, este livro se tornou uma referência para a interpretação de modelos de aprendizado de máquina.
+Pesquisadores o citaram milhares de vezes, estudantes me escreveram dizendo que ele foi essencial para suas teses, professores o utilizam em sala de aula, e cientistas de dados na indústria o usam no trabalho diário e o recomendam a seus colegas.
+O livro também foi a base da minha própria carreira: primeiro, me inspirou a fazer um doutorado em aprendizado de máquina interpretável e, mais tarde, me encorajou a me tornar escritor, educador e consultor independente.
+
+
+## Para quem é este livro
+
+Este livro é voltado para profissionais que buscam uma visão geral das técnicas para tornar modelos de aprendizado de máquina mais interpretáveis.
+Também é valioso para estudantes, professores, pesquisadores e qualquer pessoa interessada no tema.
+Ter uma compreensão básica de aprendizado de máquina e matemática em nível universitário ajuda a acompanhar a teoria apresentada. No entanto, as explicações intuitivas no início de cada capítulo foram pensadas para serem acessíveis mesmo a quem não tem familiaridade com matemática.
+
+## O que há de novo na 3ª edição?
+
+A 3ª edição é, ao mesmo tempo, uma atualização pequena e grande.
+Pequena, porque adicionei apenas dois capítulos sobre novos métodos — [LOFO](#lofo) e [Ceteris Paribus](#ceteris-paribus) — e dois capítulos introdutórios: [Visão Geral dos Métodos](#overview) e [Objetivos da Interpretabilidade](#goals).
+
+Mas também é uma grande atualização, pois fiz mudanças mais sutis que, na minha opinião, melhoram bastante o livro.
+Reestruturei a parte introdutória para torná-la mais direta, porém mais rica em conteúdo.
+Aprofundei os exemplos de dados (por exemplo, explorando correlações e fazendo análises mais refinadas), e substituí o conjunto de dados sobre câncer por um mais acessível — o conjunto **Palmer Penguins**.
+
+Para tornar o livro mais prático, incluí caixas de dicas e alertas com orientações para interpretar corretamente os modelos de machine learning.
+Outra grande mudança foi a limpeza do repositório do livro e a transição da renderização com **bookdown** para **Quarto**. Para você, leitor, isso é perceptível apenas na aparência da versão online do livro, mas facilita muito a manutenção da obra, o que beneficiará o livro *Interpretable Machine Learning* a longo prazo.
+Também corrigi diversos pequenos erros, que estão listados no [README do repositório do livro](https://github.com/christophM/interpretable-ml-book), na seção "Changelog".
+
+## Sobre o autor
+
+Olá!
+Meu nome é **Christoph Molnar**.
+Escrevo e ensino sobre aprendizado de máquina, especialmente sobre temas que vão além do desempenho preditivo.
+Sou formado em estatística, atuei por alguns anos como cientista de dados, fiz doutorado em aprendizado de máquina interpretável e hoje trabalho como escritor, além de [oferecer workshops e consultoria](https://christophmolnar.com/).
+
+Para acompanhar meu trabalho sobre machine learning, você pode assinar minha newsletter [Mindful Modeler](https://mindfulmodeler.substack.com/).
+
+Se quiser, posso transformar esse conteúdo em uma versão mais formal (para contracapa, por exemplo) ou mais leve (para redes sociais).
+
+::: {.content-visible when-format="html"}
+
+![](./images/by-nc-sa.jpg)
+
+This book is licensed under the [CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/) license.
+
+
+:::

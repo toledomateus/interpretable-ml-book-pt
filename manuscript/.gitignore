@@ -1,0 +1,8 @@
+/.quarto/
+*_cache
+*_files
+*.html
+_site_libs
+output
+api.key
+*.toc
