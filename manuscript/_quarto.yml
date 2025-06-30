@@ -5,7 +5,7 @@ project:
     - images/cover-sidepanel.jpg
   post-render:
     - ../scripts/redirect.py 
-  output-dir: docs
+  output-dir: ../docs
   
 execute:
   echo: false
