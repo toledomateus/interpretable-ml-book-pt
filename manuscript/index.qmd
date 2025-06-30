@@ -2,7 +2,8 @@
 
 ## Disclaimer
 
-Esta versão do livro é uma tradução feita por [Mateus Toledo](https://www.linkedin.com/in/mateus-toledo/) com muito carinho e rigor ténico. Caso queira ler no idioma original (inglês) você pode clicar [aqui](https://christophm.github.io/interpretable-ml-book/)
+Esta versão do livro é uma tradução feita por <a href="https://www.linkedin.com/in/mateus-toledo/" target="_blank" rel="noopener noreferrer">Mateus Toledo</a> com muito carinho e rigor técnico. Caso queira ler no idioma original (inglês), você pode clicar <a href="https://christophm.github.io/interpretable-ml-book/" target="_blank" rel="noopener noreferrer">aqui</a>.
+
 
 
 ## Sumário
