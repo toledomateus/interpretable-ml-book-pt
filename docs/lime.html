@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Traduzido por: Mateus Toledo">
+
+<title>14&nbsp; LIME – Machine Learning Interpretável</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./counterfactual.html" rel="next">
+<link href="./ice.html" rel="prev">
+<link href="./images/favicon.jpg" rel="icon" type="image/jpeg">
+<script src="site_libs/cookie-consent/cookie-consent.js"></script>
+<link href="site_libs/cookie-consent/cookie-consent.css" rel="stylesheet">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-a37c72dd2dbac68997fcdc15a3622e78.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-9ba0b7e0b9dd7b41d9c2de814a370c3a.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-V7RTNZBGE2"></script>
+
+<script type="text/plain" cookie-consent="tracking">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-V7RTNZBGE2', { 'anonymize_ip': true});
+</script>
+
+<script type="text/javascript" charset="UTF-8">
+document.addEventListener('DOMContentLoaded', function () {
+cookieconsent.run({
+  "notice_banner_type":"simple",
+  "consent_type":"implied",
+  "palette":"light",
+  "language":"en",
+  "page_load_consent_levels":["strictly-necessary","functionality","tracking","targeting"],
+  "notice_banner_reject_button_hide":false,
+  "preferences_center_close_button_hide":false,
+  "website_name":""
+  ,
+"language":"en"
+  });
+});
+</script> 
+  
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Add this to your header.html -->
+
+<style>
+
+.book-purchase-links {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 1rem;
+
+    padding: 1.5rem;
+
+    background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
+
+    border-radius: 12px;
+
+    margin: 1.5rem 0;
+
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    border: double 1px transparent;
+
+    background-image: linear-gradient(to bottom right, #ffffff, #f8f9fa),
+
+                     linear-gradient(to bottom right, #3b82f6, #60a5fa);
+
+    background-origin: border-box;
+
+    background-clip: padding-box, border-box;
+
+}
+
+
+
+.purchase-header {
+
+    text-align: center;
+
+    margin-bottom: -1rem;
+
+    margin-top: -1rem;
+
+    color: #2b3442;
+
+}
+
+
+
+.purchase-header h3 {
+
+    margin: 0 0 0.5rem 0;
+
+    font-size: 1.5rem;
+
+    font-weight: 700;
+
+}
+
+
+
+.purchase-header p {
+
+    margin: 0;
+
+    font-size: 0.9rem;
+
+    color: #6c757d;
+
+}
+
+
+
+.book-cover {
+
+    width: 80%;
+
+    height: auto;
+
+    border-radius: 8px;
+
+    margin: 0 auto 1rem auto;
+
+    transition: transform 0.3s ease;
+
+}
+
+
+
+.book-cover:hover {
+
+    transform: scale(1.1);
+
+}
+
+
+
+.purchase-link {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 0.75rem;
+
+    padding: 0.75rem 1rem;
+
+    text-decoration: none;
+
+    color: #2b3442;
+
+    border-radius: 8px;
+
+    transition: all 0.2s ease;
+
+    background: white;
+
+    border: 1px solid #e9ecef;
+
+    font-weight: 500;
+
+}
+
+
+
+.purchase-link:hover {
+
+    background-color: #f8f9fa;
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    text-decoration: none;
+
+}
+
+
+
+.purchase-link.primary {
+
+    background-color: #0066cc;
+
+    color: white;
+
+    border: none;
+
+}
+
+
+
+.purchase-link.primary:hover {
+
+    background-color: #0052a3;
+
+}
+
+
+
+.purchase-link svg {
+
+    width: 20px;
+
+    height: 20px;
+
+    flex-shrink: 0;
+
+}
+
+
+
+.price-tag {
+
+    margin-left: auto;
+
+    font-weight: 600;
+
+    color: inherit;
+
+}
+
+
+
+.social-proof {
+
+    text-align: center;
+
+    font-size: 0.85rem;
+
+    color: #6c757d;
+
+    margin-top: 0.5rem;
+
+}
+
+
+
+.limited-offer {
+
+    background: #fff3cd;
+
+    color: #856404;
+
+    padding: 0.5rem;
+
+    border-radius: 6px;
+
+    font-size: 0.85rem;
+
+    text-align: center;
+
+    margin-bottom: 1rem;
+
+}
+
+
+
+@media (max-width: 768px) {
+
+    .book-purchase-links {
+
+        padding: 1rem;
+
+    }
+
+    
+
+    .book-cover {
+
+        width: 60%;
+
+    }
+
+}
+
+</style>
+
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    const purchaseLinksContainer = document.getElementById('book-purchase-links');
+
+    if (!purchaseLinksContainer) return;
+
+
+
+    const purchaseOptions = [
+
+        {
+
+            type: 'Paperback',
+
+            primary: true,
+
+            url: 'https://bookgoodies.com/a/3911578032',
+
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>'
+
+        },
+
+        {
+
+            type: 'E-Book & PDF',
+
+            url: 'https://leanpub.com/interpretable-machine-learning',
+
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M12 6v8"></path><path d="M8 10h8"></path></svg>'
+
+        }
+
+    ];
+
+
+
+    // Create header section
+
+    const header = document.createElement('div');
+
+    header.className = 'purchase-header';
+
+    header.innerHTML = `
+
+        <h3>Buy Book</h3>
+
+    `;
+
+    purchaseLinksContainer.appendChild(header);
+
+
+
+    // Create limited time offer banner
+
+    // const limitedOffer = document.createElement('div');
+
+    // limitedOffer.className = 'limited-offer';
+
+    // limitedOffer.textContent = '🎉 Special Launch Price - Limited Time Only!';
+
+    // purchaseLinksContainer.appendChild(limitedOffer);
+
+
+
+    // Create and append book cover
+
+    const bookCover = document.createElement('img');
+
+    //bookCover.src = 'images/mockup-floating.png';
+
+    bookCover.src = './images/cover-sidepanel.jpg';
+
+    bookCover.alt = 'Book Cover';
+
+    bookCover.className = 'book-cover';
+
+    purchaseLinksContainer.appendChild(bookCover);
+
+
+
+    // Create and append purchase links
+
+    purchaseOptions.forEach(option => {
+
+        const link = document.createElement('a');
+
+        link.href = option.url;
+
+        link.className = `purchase-link ${option.primary ? 'primary' : ''}`;
+
+        link.innerHTML = `
+
+            ${option.icon}
+
+            ${option.type}
+
+        `;
+
+        purchaseLinksContainer.appendChild(link);
+
+    });
+
+
+
+    // Add social proof
+
+    // const socialProof = document.createElement('div');
+
+    // socialProof.className = 'social-proof';
+
+    // socialProof.textContent = '👥 Join thousands of satisfied readers!';
+
+    // purchaseLinksContainer.appendChild(socialProof);
+
+});
+
+</script>
+
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
+
+<link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./ceteris-paribus.html">Métodos Locais Independentes de Modelo</a></li><li class="breadcrumb-item"><a href="./lime.html"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">LIME</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Machine Learning Interpretável</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/christophM/interpretable-ml-book" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Sobre o Livro</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interpretability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Interpretability</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./goals.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Goals of Interpretability</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./overview.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Methods Overview</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Data and Models</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Modelos Interpretáveis</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./limo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Linear Regression</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./logistic.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Logistic Regression</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./extend-lm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">GLM, GAM and more</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tree.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Decision Tree</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rules.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Decision Rules</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rulefit.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">RuleFit</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Métodos Locais Independentes de Modelo</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./ceteris-paribus.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Ceteris Paribus Plots</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./ice.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Individual Conditional Expectation (ICE)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lime.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">LIME</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./counterfactual.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Counterfactual Explanations</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./anchors.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Scoped Rules (Anchors)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shapley.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Shapley Values</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shap.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">SHAP</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Métodos Globais Independentes de Modelo</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./pdp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Partial Dependence Plot (PDP)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./ale.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Accumulated Local Effects (ALE)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interaction.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Feature Interaction</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./decomposition.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Functional Decomposition</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./feature-importance.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Permutation Feature Importance</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lofo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Leave One Feature Out (LOFO) Importance</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./global.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Surrogate Models</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./proto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Prototypes and Criticisms</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Interpretação de Redes Neurais</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cnn-features.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Learned Features</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./pixel-attribution.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Saliency Maps</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./detecting-concepts.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Detecting Concepts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./adversarial.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">Adversarial Examples</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./influential.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Influential Instances</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Para Além dos Métodos</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">32</span>&nbsp; <span class="chapter-title">Evaluation of Interpretability Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./storytime.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">33</span>&nbsp; <span class="chapter-title">Story Time</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./future.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">34</span>&nbsp; <span class="chapter-title">The Future of Interpretability</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./translations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">35</span>&nbsp; <span class="chapter-title">Translations</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cite.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">36</span>&nbsp; <span class="chapter-title">Citing this Book</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./acknowledgements.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">37</span>&nbsp; <span class="chapter-title">Acknowledgments</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./what-is-machine-learning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Machine Learning Terms</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./math-terms.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Math Terms</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./r-packages.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">R packages used</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">References</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#lime-for-tabular-data" id="toc-lime-for-tabular-data" class="nav-link active" data-scroll-target="#lime-for-tabular-data">LIME for tabular data</a></li>
+  <li><a href="#lime-for-text-data" id="toc-lime-for-text-data" class="nav-link" data-scroll-target="#lime-for-text-data">LIME for text data</a></li>
+  <li><a href="#images-lime" id="toc-images-lime" class="nav-link" data-scroll-target="#images-lime">LIME for image data</a></li>
+  <li><a href="#strengths" id="toc-strengths" class="nav-link" data-scroll-target="#strengths">Strengths</a></li>
+  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations">Limitations</a></li>
+  <li><a href="#software" id="toc-software" class="nav-link" data-scroll-target="#software">Software</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/christophM/interpretable-ml-book/blob/main/lime.qmd" class="toc-action"><i class="bi bi-github"></i>View source</a></li><li><a href="https://github.com/christophM/interpretable-ml-book/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./ceteris-paribus.html">Métodos Locais Independentes de Modelo</a></li><li class="breadcrumb-item"><a href="./lime.html"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">LIME</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="lime" class="quarto-section-identifier"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">LIME</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Local surrogate models are interpretable models that are used to explain individual predictions of black box machine learning models. Local interpretable model-agnostic explanations (LIME), proposed by <span class="citation" data-cites="ribeiro2016why">Ribeiro, Singh, and Guestrin (<a href="references.html#ref-ribeiro2016why" role="doc-biblioref">2016</a>)</span>, is an approach for fitting surrogate models. Surrogate models are trained to approximate the predictions of the underlying black box model.</p>
+<p>The idea is quite intuitive. First, forget about the training data and imagine you only have the black box model where you can input data points and get the predictions of the model. You can probe the box as often as you want. Your goal is to understand why the machine learning model made a certain prediction. LIME tests what happens to the predictions when you give variations of your data into the machine learning model. LIME generates a new dataset consisting of perturbed samples and the corresponding predictions of the black box model. On this new dataset, LIME then trains an interpretable model, which is weighted by the proximity of the sampled instances to the instance of interest. The interpretable model can be anything from <a href="limo.html#lasso">Lasso</a> to a <a href="tree.html">decision tree</a>. The learned model should be a good approximation of the machine learning model predictions locally, but it does not have to be a good global approximation. This kind of accuracy is also called local fidelity.</p>
+<p>Mathematically, local surrogate models with interpretability constraint can be expressed as follows:</p>
+<p><span class="math display">\[\text{explanation}(\mathbf{x}) = \arg\min_{g \in G} L(\hat{f},g,\pi_{\mathbf{x}}) + \Omega(g)\]</span></p>
+<p>The explanation model for instance <span class="math inline">\(\mathbf{x}\)</span> is the model <span class="math inline">\(g\)</span> (e.g., linear regression model) that minimizes loss <span class="math inline">\(L\)</span> (e.g., mean squared error), which measures how close the explanation is to the prediction of the original model <span class="math inline">\(\hat{f}\)</span> (e.g., an xgboost model), while the model complexity <span class="math inline">\(\Omega(g)\)</span> is kept low (e.g., prefer fewer features). <span class="math inline">\(G\)</span> is the family of possible explanations, for example, all possible linear regression models. The proximity measure <span class="math inline">\(\pi_{\mathbf{x}}\)</span> defines how large the neighborhood around instance <span class="math inline">\(\mathbf{x}\)</span> is that we consider for the explanation. In practice, LIME only optimizes the loss part. The user has to determine the complexity, e.g., by selecting the maximum number of features that the linear regression model may use.</p>
+<p>The recipe for training local surrogate models:</p>
+<ul>
+<li>Select your instance of interest for which you want to have an explanation of its black box prediction.</li>
+<li>Perturb your dataset and get the black box predictions for these new points.</li>
+<li>Weight the new samples according to their proximity to the instance of interest.</li>
+<li>Train a weighted, interpretable model on the dataset with the variations.</li>
+<li>Explain the prediction by interpreting the local model.</li>
+</ul>
+<p>In the current implementations in <a href="https://github.com/thomasp85/lime">R</a> and <a href="https://github.com/marcotcr/lime">Python</a>, for example, linear regression can be chosen as an interpretable surrogate model. In advance, you have to select <span class="math inline">\(K\)</span>, the number of features you want to have in your interpretable model. The lower <span class="math inline">\(K\)</span>, the easier it is to interpret the model. A higher <span class="math inline">\(K\)</span> potentially produces models with higher fidelity. There are several methods for training models with exactly <span class="math inline">\(K\)</span> features. A good choice is <a href="limo.html#lasso">Lasso</a>. A Lasso model with a high regularization parameter <span class="math inline">\(\lambda\)</span> yields a model without any feature. By retraining the Lasso models with slowly decreasing <span class="math inline">\(\lambda\)</span>, one after the other, the features get weight estimates that differ from zero. If there are <span class="math inline">\(K\)</span> features in the model, you have reached the desired number of features. Other strategies are forward or backward selection of features. This means you either start with the full model (= containing all features) or with a model with only the intercept and then test which feature would bring the biggest improvement when added or removed, until a model with <span class="math inline">\(K\)</span> features is reached.</p>
+<p>How do you get the variations of the data? This depends on the type of data, which can be either text, image, or tabular data. For text and images, the solution is to turn single words or super-pixels on or off. In the case of tabular data, LIME creates new samples by perturbing each feature individually, drawing from a normal distribution with mean and standard deviation taken from the feature.</p>
+<section id="lime-for-tabular-data" class="level2">
+<h2 class="anchored" data-anchor-id="lime-for-tabular-data">LIME for tabular data</h2>
+<p>Tabular data is data that comes in tables, with each row representing an instance and each column a feature. LIME samples are not taken around the instance of interest, but from the training data’s mass center, which is problematic. But it increases the probability that the result for some of the sample points’ predictions differs from the data point of interest, and that LIME can learn at least some explanation. <a href="#fig-lime-fitting" class="quarto-xref">Figure&nbsp;<span>14.1</span></a> visually explains how sampling and local model training works:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-lime-fitting" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lime-fitting-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="lime_files/figure-html/fig-lime-fitting-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;14.1: LIME algorithm for tabular data. A) Prediction surface given features x_1 and x_2. Predicted classes: 1 (dark) or 0 (light). B) Instance of interest (big dot) and sampled data (small dots). C) Assign weights based on distance to instance. D) Signs (+/-) show the classifications of the locally learned model from the weighted samples. The white line marks the decision boundary (P(c=1) = 0.5)."><img src="lime_files/figure-html/fig-lime-fitting-1.png" class="img-fluid figure-img" width="672"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lime-fitting-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14.1: LIME algorithm for tabular data. A) Prediction surface given features <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span>. Predicted classes: 1 (dark) or 0 (light). B) Instance of interest (big dot) and sampled data (small dots). C) Assign weights based on distance to instance. D) Signs (+/-) show the classifications of the locally learned model from the weighted samples. The white line marks the decision boundary (P(c=1) = 0.5).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>As always, the devil is in the detail. Defining a meaningful neighborhood around a point is difficult. LIME currently uses an exponential smoothing kernel to define the neighborhood. A smoothing kernel is a function that takes two data instances and returns a proximity measure. The kernel width determines how large the neighborhood is: A small kernel width means that an instance must be very close to influence the local model; a larger kernel width means that instances that are farther away also influence the model. If you look at <a href="https://github.com/marcotcr/lime/tree/ce2db6f20f47c3330beb107bb17fd25840ca4606">LIME’s Python implementation (file lime/lime_tabular.py)</a>, you will see that it uses an exponential smoothing kernel (on the normalized data), and the kernel width is 0.75 times the square root of the number of columns of the training data. It looks like an innocent line of code, but it’s the elephant sitting in your living room next to the good porcelain you got from your grandparents. The big problem is that we don’t have a good way to find the best kernel or width. And where does the 0.75 even come from? In certain scenarios, you can easily turn your explanation around by changing the kernel width, as shown in <a href="#fig-lime-fail" class="quarto-xref">Figure&nbsp;<span>14.2</span></a>: The resulting linear regression model depends on the kernel width. Should the “true” local feature effect be negative, positive, or no effect for <span class="math inline">\(x = 1.6\)</span>?</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-lime-fail" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lime-fail-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="lime_files/figure-html/fig-lime-fail-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;14.2: Explanation of the prediction of instance x = 1.6 with different kernel widths. The model predictions are shown as a thick line and the distribution of the data is shown with rugs. Three local surrogate models with different kernel widths are computed."><img src="lime_files/figure-html/fig-lime-fail-1.png" class="img-fluid figure-img" style="width:85.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lime-fail-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14.2: Explanation of the prediction of instance x = 1.6 with different kernel widths. The model predictions are shown as a thick line and the distribution of the data is shown with rugs. Three local surrogate models with different kernel widths are computed.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The example shows only one feature. It gets worse in high-dimensional feature spaces. It’s also very unclear whether the distance measure should treat all features equally. Is a distance unit for feature <span class="math inline">\(X_1\)</span> identical to one unit for feature <span class="math inline">\(X_2\)</span>? Distance measures are quite arbitrary and distances in different dimensions (aka features) might not be comparable at all.</p>
+<p>Let’s look at a concrete example. We go back to the <a href="data.html#bike-data">penguins data</a>, which is about classifying a penguin as female or male based on body measurements. We analyze the random forest trained to do that. The explanations are created with 2 features. The results of the sparse local linear models trained for two instances with different predicted classes are shown in <a href="#fig-lime-tabular-example-explain-plot-1" class="quarto-xref">Figure&nbsp;<span>14.3</span></a>. Here, higher body mass and longer bills are associated with lower P(female).</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-lime-tabular-example-explain-plot-1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lime-tabular-example-explain-plot-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="lime_files/figure-html/fig-lime-tabular-example-explain-plot-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;14.3: LIME explanations for two instances of the penguin dataset. The x-axis shows the feature effect, which is the weight times the actual feature value."><img src="lime_files/figure-html/fig-lime-tabular-example-explain-plot-1-1.png" class="img-fluid figure-img" width="672"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lime-tabular-example-explain-plot-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14.3: LIME explanations for two instances of the penguin dataset. The x-axis shows the feature effect, which is the weight times the actual feature value.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="lime-for-text-data" class="level2">
+<h2 class="anchored" data-anchor-id="lime-for-text-data">LIME for text data</h2>
+<p>LIME for text differs from LIME for tabular data. Variations of the data are generated differently: Starting from the original text, new texts are created by randomly removing words from the original text. The dataset is represented with binary features for each word. A feature is 1 if the corresponding word is included and 0 if it has been removed.</p>
+<p>As an example for text classification, we work with 1956 comments from 5 different YouTube videos. Thankfully, the authors who used this dataset in an article on spam classification made the data <a href="https://archive.ics.uci.edu/ml/datasets/YouTube+Spam+Collection">freely available</a> <span class="citation" data-cites="alberto2015tubespam">(<a href="references.html#ref-alberto2015tubespam" role="doc-biblioref">Alberto, Lochter, and Almeida 2015</a>)</span>.</p>
+<p>The comments were collected via the YouTube API from five of the ten most viewed videos on YouTube in the first half of 2015. All 5 are music videos. One of them is “Gangnam Style” by Korean artist Psy. The other artists are Katy Perry, LMFAO, Eminem, and Shakira. Check out two comments in <a href="#tbl-show-data-TubeSpam" class="quarto-xref">Table&nbsp;<span>14.1</span></a>, one spam (class=1), one legit (class=0). The comments were manually labeled as spam or legitimate. Spam was coded with a “1” and legitimate comments with a “0”. You can also go to YouTube and take a look at the comment section. But please do not get caught in YouTube hell, and end up watching videos of monkeys stealing and drinking cocktails from tourists on the beach. The Google Spam detector has also probably changed a lot since 2015. <a href="https://www.youtube.com/watch?v=9bZkp7q19f0&amp;feature=player_embedded">Watch the view-record-breaking video “Gangnam Style” here</a>.</p>
+<p>The black box model is a deep decision tree trained on the document word matrix. Each comment is one document (= one row), and each column is the number of occurrences of a given word. Short decision trees are easy to understand, but in this case, the tree is very deep. Also, in place of this tree, there could have been a recurrent neural network or a support vector machine trained on word embeddings (abstract vectors).</p>
+<div class="cell">
+<div id="tbl-show-data-TubeSpam" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-show-data-TubeSpam-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;14.1: Two examples of comments.
+</figcaption>
+<div aria-describedby="tbl-show-data-TubeSpam-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th"></th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">CONTENT</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">CLASS</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">267</td>
+<td style="text-align: left;">PSY is a good guy</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">173</td>
+<td style="text-align: left;">For Christmas Song visit my channel! ;)</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The next step is to create some variations of the datasets used in a local model. For example, some variations of one of the comments, see <a href="#tbl-lime-text-variations-output" class="quarto-xref">Table&nbsp;<span>14.2</span></a>. Each column corresponds to one word in the sentence. Each row is a variation; 1 means that the word is part of this variation, and 0 means that the word has been removed. The corresponding sentence for one of the variations is “Christmas Song visit my ;)”. The “prob” column shows the predicted probability of spam for each of the sentence variations. The “weight” column shows the proximity of the variation to the original sentence, calculated as 1 minus the proportion of words that were removed, for example if 1 out of 7 words was removed, the proximity is 1 - 1/7 = 0.86.</p>
+<div class="cell">
+<div id="tbl-lime-text-variations-output" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-lime-text-variations-output-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;14.2: Variations of one of the YouTube comments along with their weights (based on distance) and predicted probability of being spam.
+</figcaption>
+<div aria-describedby="tbl-lime-text-variations-output-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="table do-not-create-environment cell caption-top table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th style="text-align: right;" data-quarto-table-cell-role="th">For</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Christmas</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Song</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">visit</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">my</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">channel!</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">;)</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">prob</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">weight</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.17</td>
+<td style="text-align: right;">0.57</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.17</td>
+<td style="text-align: right;">0.71</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.99</td>
+<td style="text-align: right;">0.71</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.99</td>
+<td style="text-align: right;">0.86</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.17</td>
+<td style="text-align: right;">0.57</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>And finally <a href="#tbl-lime-text-explanations" class="quarto-xref">Table&nbsp;<span>14.3</span></a> shows the two sentences (one spam, one no spam) with their estimated local weights found by the LIME algorithm: The word “channel” indicates a high probability of spam. For the non-spam comment, no non-zero weight was estimated, because no matter which word is removed, the predicted class remains the same.</p>
+<div class="cell">
+<div id="tbl-lime-text-explanations" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-lime-text-explanations-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;14.3: LIME explanations for text classification.
+</figcaption>
+<div aria-describedby="tbl-lime-text-explanations-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th style="text-align: right;" data-quarto-table-cell-role="th">case</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">label_prob</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">feature</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">feature_weight</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.1701170</td>
+<td style="text-align: left;">PSY</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.1701170</td>
+<td style="text-align: left;">a</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.1701170</td>
+<td style="text-align: left;">good</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.9939024</td>
+<td style="text-align: left;">channel!</td>
+<td style="text-align: right;">6.180747</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.9939024</td>
+<td style="text-align: left;">my</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.9939024</td>
+<td style="text-align: left;">visit</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="images-lime" class="level2">
+<h2 class="anchored" data-anchor-id="images-lime">LIME for image data</h2>
+<p><em>This section was written by Verena Haunschmid.</em></p>
+<p>LIME for images works differently than LIME for tabular data and text. Intuitively, it would not make much sense to perturb individual pixels, since many more than one pixel contribute to one class. Randomly changing individual pixels would probably not change the predictions by much. Therefore, variations of the images are created by segmenting the image into “superpixels” and turning superpixels off or on. Superpixels are interconnected pixels with similar colors and can be turned off by replacing each pixel with a user-defined color, such as gray. The user can also specify a probability for turning off a superpixel in each permutation.</p>
+<p>In this example, we look at a classification made by the Inception V3 neural network. The image used shows some bread I baked that is in a bowl (see <a href="#fig-lime-images-package-example-include" class="quarto-xref">Figure&nbsp;<span>14.4</span></a>). Since we can have several predicted labels per image (sorted by probability), we can explain the top labels. The top prediction is “Bagel” with a probability of <span class="math inline">\(\mathbb{P}(Y = \text{Bagel}) = 0.77\)</span>, followed by “Strawberry” with a probability of <span class="math inline">\(\mathbb{P}(Y = \text{Strawberry}) = 0.04\)</span>. The following images show for “Bagel” and “Strawberry” the LIME explanations. The explanations can be displayed directly on the image samples. Green means that this part of the image increases the probability for the label, and red means a decrease.</p>
+<div id="fig-lime-images-package-example-include" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lime-images-package-example-include-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/lime-images-package-example-1.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;14.4: Left: Image of a bowl of bread. Middle and right: LIME explanations for the top 2 classes (Bagel, Strawberry) for image classification made by Google’s Inception V3 neural network."><img src="images/lime-images-package-example-1.jpg" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lime-images-package-example-include-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14.4: Left: Image of a bowl of bread. Middle and right: LIME explanations for the top 2 classes (Bagel, Strawberry) for image classification made by Google’s Inception V3 neural network.
+</figcaption>
+</figure>
+</div>
+<p>The prediction and explanation for “Bagel” are very reasonable, even if the prediction is wrong – these are clearly no bagels since the hole in the middle is missing.</p>
+</section>
+<section id="strengths" class="level2">
+<h2 class="anchored" data-anchor-id="strengths">Strengths</h2>
+<p>Even if you <strong>replace the underlying machine learning model</strong>, you can still use the same local, interpretable model for explanation. Suppose the people looking at the explanations understand decision trees best. Because you use local surrogate models, you use decision trees as explanations without actually having to use a decision tree to make the predictions. For example, you can use an SVM. And if it turns out that an xgboost model works better, you can replace the SVM and still use a decision tree to explain the predictions.</p>
+<p>Local surrogate models benefit from the literature and experience of training and interpreting interpretable models.</p>
+<p>When using Lasso or short trees, the resulting <strong>explanations are short (= selective) and possibly contrastive</strong>. Therefore, they make <a href="interpretability.html#explanation">human-friendly explanations</a>.</p>
+<p>LIME is one of the few methods that <strong>works for tabular data, text, and images</strong>.</p>
+<p>The <strong>fidelity measure</strong> (how well the interpretable model approximates the black box predictions) gives us a good idea of how reliable the interpretable model is in explaining the black box predictions in the neighborhood of the data instance of interest.</p>
+<p>LIME is implemented in Python (<a href="https://github.com/marcotcr/lime">lime</a> library) and R (<a href="https://cran.r-project.org/web/packages/lime/index.html">lime package</a> and <a href="https://cran.r-project.org/web/packages/iml/index.html">iml package</a>) and is <strong>very easy to use</strong>.</p>
+<p>The explanations created with local surrogate models <strong>can use other (interpretable) features than the original model was trained on</strong>. Of course, these interpretable features must be derived from the data instances. A text classifier can rely on abstract word embeddings as features, but the explanation can be based on the presence or absence of words in a sentence. A regression model can rely on a non-interpretable transformation of some attributes, but the explanations can be created with the original attributes. For example, the regression model could be trained on components of a principal component analysis (PCA) of answers to a survey, but LIME might be trained on the original survey questions. Using interpretable features for LIME can be a big advantage over other methods, especially when the model was trained with non-interpretable features.</p>
+</section>
+<section id="limitations" class="level2">
+<h2 class="anchored" data-anchor-id="limitations">Limitations</h2>
+<p>The <strong>choice of neighborhood is an unsolved problem</strong> when using LIME with tabular data. In my opinion, it’s the biggest problem with LIME and the reason why I would recommend using LIME only with great care. For each application, you have to try different kernel settings and see for yourself if the explanations make sense. Unfortunately, this is the best advice I can give to find good kernel widths.</p>
+<p>Sampling could be improved in the current implementation of LIME. Data points are sampled from a Gaussian distribution, ignoring the correlation between features. This <strong>can lead to unlikely data points</strong>, which can then be used to learn local explanation models.</p>
+<p>The <strong>complexity of the explanation model has to be defined in advance</strong>. This is just a small complaint because, in the end, the user always has to define the compromise between fidelity and sparsity.</p>
+<p>Another really big problem is the <strong>instability of the explanations</strong>. In an article <span class="citation" data-cites="melis2018robustness">(<a href="references.html#ref-melis2018robustness" role="doc-biblioref">Alvarez-Melis and Jaakkola 2018</a>)</span>, the authors showed that the explanations of two very close points varied greatly in a simulated setting. Also, in my experience, if you repeat the sampling process, then the explanations that come out can be different. Instability means that it is difficult to trust the explanations, and you should be very critical.</p>
+<p>LIME explanations can be manipulated by the data scientist to hide biases <span class="citation" data-cites="slack2020fooling">(<a href="references.html#ref-slack2020fooling" role="doc-biblioref">Slack et al. 2020</a>)</span>. The possibility of manipulation makes it more difficult to trust explanations generated with LIME.</p>
+<p>Conclusion: Local surrogate models, with LIME as a concrete implementation, are very promising. But the method is still in the development phase and many problems need to be solved before it can be safely applied.</p>
+</section>
+<section id="software" class="level2">
+<h2 class="anchored" data-anchor-id="software">Software</h2>
+<p>The original Python implementation is in the <a href="https://github.com/marcotcr/lime">lime package</a>. Other Python implementations can be found in <a href="https://selfexplainml.github.io/PiML-Toolbox/_build/html/index.html">PiML</a>, and <a href="https://eli5.readthedocs.io/en/latest/blackbox/lime.html">eli5</a>. In R, you can use <a href="https://github.com/giuseppec/iml">iml</a> or <a href="https://dalex.drwhy.ai/">DALEX</a>.</p>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-alberto2015tubespam" class="csl-entry" role="listitem">
+Alberto, Túlio C, Johannes V Lochter, and Tiago A Almeida. 2015. <span>“Tubespam: Comment Spam Filtering on Youtube.”</span> In <em>2015 IEEE 14th International Conference on Machine Learning and Applications (ICMLA)</em>, 138–43. IEEE.
+</div>
+<div id="ref-melis2018robustness" class="csl-entry" role="listitem">
+Alvarez-Melis, David, and Tommi S. Jaakkola. 2018. <span>“On the <span>Robustness</span> of <span>Interpretability Methods</span>.”</span> arXiv. <a href="https://doi.org/10.48550/arXiv.1806.08049">https://doi.org/10.48550/arXiv.1806.08049</a>.
+</div>
+<div id="ref-ribeiro2016why" class="csl-entry" role="listitem">
+Ribeiro, Marco Tulio, Sameer Singh, and Carlos Guestrin. 2016. <span>“"<span>Why Should I Trust You</span>?": <span>Explaining</span> the <span>Predictions</span> of <span>Any Classifier</span>.”</span> In <em>Proceedings of the 22nd <span>ACM SIGKDD International Conference</span> on <span>Knowledge Discovery</span> and <span>Data Mining</span></em>, 1135–44. <span>KDD</span> ’16. New York, NY, USA: Association for Computing Machinery. <a href="https://doi.org/10.1145/2939672.2939778">https://doi.org/10.1145/2939672.2939778</a>.
+</div>
+<div id="ref-slack2020fooling" class="csl-entry" role="listitem">
+Slack, Dylan, Sophie Hilgard, Emily Jia, Sameer Singh, and Himabindu Lakkaraju. 2020. <span>“Fooling <span>LIME</span> and <span>SHAP</span>: <span>Adversarial Attacks</span> on <span>Post</span> Hoc <span>Explanation Methods</span>.”</span> In <em>Proceedings of the <span>AAAI</span>/<span>ACM Conference</span> on <span>AI</span>, <span>Ethics</span>, and <span>Society</span></em>, 180–86. <span>AIES</span> ’20. New York, NY, USA: Association for Computing Machinery. <a href="https://doi.org/10.1145/3375627.3375830">https://doi.org/10.1145/3375627.3375830</a>.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./ice.html" class="pagination-link" aria-label="Individual Conditional Expectation (ICE)">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Individual Conditional Expectation (ICE)</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./counterfactual.html" class="pagination-link" aria-label="Counterfactual Explanations">
+        <span class="nav-page-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Counterfactual Explanations</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p><a href="privacy-policy.html" target="_blank" style="font-size:11px;"> Privacy Policy </a> | <a href="https://christophmolnar.com/impressum" target="_blank" style="font-size:11px"> Impressum </a></p>
+<div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/christophM/interpretable-ml-book/blob/main/lime.qmd" class="toc-action"><i class="bi bi-github"></i>View source</a></li><li><a href="https://github.com/christophM/interpretable-ml-book/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div><div class="cookie-consent-footer"><a href="#" id="open_preferences_center">Cookie Preferences</a></div></div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

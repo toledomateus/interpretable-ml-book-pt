@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Traduzido por: Mateus Toledo">
+
+<title>17&nbsp; Shapley Values – Machine Learning Interpretável</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./shap.html" rel="next">
+<link href="./anchors.html" rel="prev">
+<link href="./images/favicon.jpg" rel="icon" type="image/jpeg">
+<script src="site_libs/cookie-consent/cookie-consent.js"></script>
+<link href="site_libs/cookie-consent/cookie-consent.css" rel="stylesheet">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-a37c72dd2dbac68997fcdc15a3622e78.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-9ba0b7e0b9dd7b41d9c2de814a370c3a.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-V7RTNZBGE2"></script>
+
+<script type="text/plain" cookie-consent="tracking">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-V7RTNZBGE2', { 'anonymize_ip': true});
+</script>
+
+<script type="text/javascript" charset="UTF-8">
+document.addEventListener('DOMContentLoaded', function () {
+cookieconsent.run({
+  "notice_banner_type":"simple",
+  "consent_type":"implied",
+  "palette":"light",
+  "language":"en",
+  "page_load_consent_levels":["strictly-necessary","functionality","tracking","targeting"],
+  "notice_banner_reject_button_hide":false,
+  "preferences_center_close_button_hide":false,
+  "website_name":""
+  ,
+"language":"en"
+  });
+});
+</script> 
+  
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Add this to your header.html -->
+
+<style>
+
+.book-purchase-links {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 1rem;
+
+    padding: 1.5rem;
+
+    background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
+
+    border-radius: 12px;
+
+    margin: 1.5rem 0;
+
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    border: double 1px transparent;
+
+    background-image: linear-gradient(to bottom right, #ffffff, #f8f9fa),
+
+                     linear-gradient(to bottom right, #3b82f6, #60a5fa);
+
+    background-origin: border-box;
+
+    background-clip: padding-box, border-box;
+
+}
+
+
+
+.purchase-header {
+
+    text-align: center;
+
+    margin-bottom: -1rem;
+
+    margin-top: -1rem;
+
+    color: #2b3442;
+
+}
+
+
+
+.purchase-header h3 {
+
+    margin: 0 0 0.5rem 0;
+
+    font-size: 1.5rem;
+
+    font-weight: 700;
+
+}
+
+
+
+.purchase-header p {
+
+    margin: 0;
+
+    font-size: 0.9rem;
+
+    color: #6c757d;
+
+}
+
+
+
+.book-cover {
+
+    width: 80%;
+
+    height: auto;
+
+    border-radius: 8px;
+
+    margin: 0 auto 1rem auto;
+
+    transition: transform 0.3s ease;
+
+}
+
+
+
+.book-cover:hover {
+
+    transform: scale(1.1);
+
+}
+
+
+
+.purchase-link {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 0.75rem;
+
+    padding: 0.75rem 1rem;
+
+    text-decoration: none;
+
+    color: #2b3442;
+
+    border-radius: 8px;
+
+    transition: all 0.2s ease;
+
+    background: white;
+
+    border: 1px solid #e9ecef;
+
+    font-weight: 500;
+
+}
+
+
+
+.purchase-link:hover {
+
+    background-color: #f8f9fa;
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    text-decoration: none;
+
+}
+
+
+
+.purchase-link.primary {
+
+    background-color: #0066cc;
+
+    color: white;
+
+    border: none;
+
+}
+
+
+
+.purchase-link.primary:hover {
+
+    background-color: #0052a3;
+
+}
+
+
+
+.purchase-link svg {
+
+    width: 20px;
+
+    height: 20px;
+
+    flex-shrink: 0;
+
+}
+
+
+
+.price-tag {
+
+    margin-left: auto;
+
+    font-weight: 600;
+
+    color: inherit;
+
+}
+
+
+
+.social-proof {
+
+    text-align: center;
+
+    font-size: 0.85rem;
+
+    color: #6c757d;
+
+    margin-top: 0.5rem;
+
+}
+
+
+
+.limited-offer {
+
+    background: #fff3cd;
+
+    color: #856404;
+
+    padding: 0.5rem;
+
+    border-radius: 6px;
+
+    font-size: 0.85rem;
+
+    text-align: center;
+
+    margin-bottom: 1rem;
+
+}
+
+
+
+@media (max-width: 768px) {
+
+    .book-purchase-links {
+
+        padding: 1rem;
+
+    }
+
+    
+
+    .book-cover {
+
+        width: 60%;
+
+    }
+
+}
+
+</style>
+
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    const purchaseLinksContainer = document.getElementById('book-purchase-links');
+
+    if (!purchaseLinksContainer) return;
+
+
+
+    const purchaseOptions = [
+
+        {
+
+            type: 'Paperback',
+
+            primary: true,
+
+            url: 'https://bookgoodies.com/a/3911578032',
+
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>'
+
+        },
+
+        {
+
+            type: 'E-Book & PDF',
+
+            url: 'https://leanpub.com/interpretable-machine-learning',
+
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M12 6v8"></path><path d="M8 10h8"></path></svg>'
+
+        }
+
+    ];
+
+
+
+    // Create header section
+
+    const header = document.createElement('div');
+
+    header.className = 'purchase-header';
+
+    header.innerHTML = `
+
+        <h3>Buy Book</h3>
+
+    `;
+
+    purchaseLinksContainer.appendChild(header);
+
+
+
+    // Create limited time offer banner
+
+    // const limitedOffer = document.createElement('div');
+
+    // limitedOffer.className = 'limited-offer';
+
+    // limitedOffer.textContent = '🎉 Special Launch Price - Limited Time Only!';
+
+    // purchaseLinksContainer.appendChild(limitedOffer);
+
+
+
+    // Create and append book cover
+
+    const bookCover = document.createElement('img');
+
+    //bookCover.src = 'images/mockup-floating.png';
+
+    bookCover.src = './images/cover-sidepanel.jpg';
+
+    bookCover.alt = 'Book Cover';
+
+    bookCover.className = 'book-cover';
+
+    purchaseLinksContainer.appendChild(bookCover);
+
+
+
+    // Create and append purchase links
+
+    purchaseOptions.forEach(option => {
+
+        const link = document.createElement('a');
+
+        link.href = option.url;
+
+        link.className = `purchase-link ${option.primary ? 'primary' : ''}`;
+
+        link.innerHTML = `
+
+            ${option.icon}
+
+            ${option.type}
+
+        `;
+
+        purchaseLinksContainer.appendChild(link);
+
+    });
+
+
+
+    // Add social proof
+
+    // const socialProof = document.createElement('div');
+
+    // socialProof.className = 'social-proof';
+
+    // socialProof.textContent = '👥 Join thousands of satisfied readers!';
+
+    // purchaseLinksContainer.appendChild(socialProof);
+
+});
+
+</script>
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./ceteris-paribus.html">Métodos Locais Independentes de Modelo</a></li><li class="breadcrumb-item"><a href="./shapley.html"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Shapley Values</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Machine Learning Interpretável</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/christophM/interpretable-ml-book" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Sobre o Livro</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interpretability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Interpretability</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./goals.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Goals of Interpretability</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./overview.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Methods Overview</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Data and Models</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Modelos Interpretáveis</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./limo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Linear Regression</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./logistic.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Logistic Regression</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./extend-lm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">GLM, GAM and more</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tree.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Decision Tree</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rules.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Decision Rules</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rulefit.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">RuleFit</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Métodos Locais Independentes de Modelo</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./ceteris-paribus.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Ceteris Paribus Plots</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./ice.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Individual Conditional Expectation (ICE)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lime.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">LIME</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./counterfactual.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Counterfactual Explanations</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./anchors.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Scoped Rules (Anchors)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shapley.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Shapley Values</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shap.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">SHAP</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Métodos Globais Independentes de Modelo</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./pdp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Partial Dependence Plot (PDP)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./ale.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Accumulated Local Effects (ALE)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./interaction.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Feature Interaction</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./decomposition.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Functional Decomposition</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./feature-importance.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Permutation Feature Importance</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./lofo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Leave One Feature Out (LOFO) Importance</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./global.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Surrogate Models</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./proto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Prototypes and Criticisms</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Interpretação de Redes Neurais</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cnn-features.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Learned Features</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./pixel-attribution.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Saliency Maps</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./detecting-concepts.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Detecting Concepts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./adversarial.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">Adversarial Examples</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./influential.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Influential Instances</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Para Além dos Métodos</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">32</span>&nbsp; <span class="chapter-title">Evaluation of Interpretability Methods</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./storytime.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">33</span>&nbsp; <span class="chapter-title">Story Time</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./future.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">34</span>&nbsp; <span class="chapter-title">The Future of Interpretability</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./translations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">35</span>&nbsp; <span class="chapter-title">Translations</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cite.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">36</span>&nbsp; <span class="chapter-title">Citing this Book</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./acknowledgements.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">37</span>&nbsp; <span class="chapter-title">Acknowledgments</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./what-is-machine-learning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Machine Learning Terms</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./math-terms.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Math Terms</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./r-packages.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">R packages used</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">References</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#general-idea" id="toc-general-idea" class="nav-link active" data-scroll-target="#general-idea">General idea</a></li>
+  <li><a href="#examples-and-interpretation" id="toc-examples-and-interpretation" class="nav-link" data-scroll-target="#examples-and-interpretation">Examples and interpretation</a></li>
+  <li><a href="#shapley-value-theory" id="toc-shapley-value-theory" class="nav-link" data-scroll-target="#shapley-value-theory">Shapley value theory</a>
+  <ul class="collapse">
+  <li><a href="#definition" id="toc-definition" class="nav-link" data-scroll-target="#definition">Definition</a></li>
+  </ul></li>
+  <li><a href="#estimating-shapley-values" id="toc-estimating-shapley-values" class="nav-link" data-scroll-target="#estimating-shapley-values">Estimating Shapley values</a></li>
+  <li><a href="#strengths" id="toc-strengths" class="nav-link" data-scroll-target="#strengths">Strengths</a></li>
+  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations">Limitations</a></li>
+  <li><a href="#software-and-alternatives" id="toc-software-and-alternatives" class="nav-link" data-scroll-target="#software-and-alternatives">Software and alternatives</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/christophM/interpretable-ml-book/blob/main/shapley.qmd" class="toc-action"><i class="bi bi-github"></i>View source</a></li><li><a href="https://github.com/christophM/interpretable-ml-book/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./ceteris-paribus.html">Métodos Locais Independentes de Modelo</a></li><li class="breadcrumb-item"><a href="./shapley.html"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Shapley Values</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="shapley" class="quarto-section-identifier"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Shapley Values</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>A prediction can be explained by assuming that each feature value of the instance is a “player” in a game where the prediction is the payout. Shapley values – a method from coalitional game theory – tell us how to fairly distribute the “payout” among the features.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<div class="quarto-layout-panel" data-layout="[60,40]">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 60.0%;justify-content: flex-start;">
+<p>Looking for a comprehensive, hands-on guide to SHAP and Shapley values? <a href="https://leanpub.com/shap">Interpreting Machine Learning Models with SHAP</a> has you covered. With practical Python examples using the shap package, you’ll learn how to explain models ranging from simple to complex. It dives deep into the mechanics of SHAP, provides interpretation templates, and highlights key limitations, giving you the insights you need to apply SHAP confidently and effectively.</p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 40.0%;justify-content: center;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="./images/cover-shap-book.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="./images/cover-shap-book.jpg" class="img-fluid quarto-figure quarto-figure-center figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<section id="general-idea" class="level2">
+<h2 class="anchored" data-anchor-id="general-idea">General idea</h2>
+<p>Assume the following scenario: You’ve trained a machine learning model to predict apartment prices. For a certain apartment, it predicts €300,000, and you need to explain this prediction. The apartment has an area of 50 m<span class="math inline">\(^2\)</span>, is located on the 2nd floor, has a park nearby, and cats are banned, as illustrated in <a href="#fig-shapley-instance" class="quarto-xref">Figure&nbsp;<span>17.1</span></a>. The average prediction for all apartments is €310,000. Our goal is to explain how each of these feature values contributed to the prediction. How much has each feature value contributed to the prediction compared to the average prediction?</p>
+<div id="fig-shapley-instance" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-shapley-instance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="./images/shapley-instance.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;17.1: The predicted price for a 50 m^2 2nd floor apartment with a nearby park and cat ban is €300,000."><img src="./images/shapley-instance.jpg" class="img-fluid figure-img" style="width:75.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-shapley-instance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;17.1: The predicted price for a 50 <span class="math inline">\(m^2\)</span> 2nd floor apartment with a nearby park and cat ban is €300,000.
+</figcaption>
+</figure>
+</div>
+<p>The answer is simple for linear regression models. The effect of each feature is the weight of the feature times the feature value. This only works because of the linearity of the model. For more complex models, we need a different solution. For example, <a href="lime.html">LIME</a> suggests local models to estimate effects. Another solution comes from cooperative game theory: The Shapley value, coined by <span class="citation" data-cites="shapley1953value">Shapley (<a href="references.html#ref-shapley1953value" role="doc-biblioref">1953</a>)</span>, is a method for assigning payouts to players depending on their contribution to the total payout. Players cooperate in a coalition and receive a certain profit from this cooperation.</p>
+<p>Players? Game? Payout? What’s the connection to machine learning predictions and interpretability? The “game” is the prediction task for a single instance of the dataset. The “gain” is the actual prediction for this instance minus the average prediction for all instances. The “players” are the feature values of the instance that collaborate to receive the gain (= predict a certain value). In our apartment example, the feature values <code>park-nearby</code>, <code>cat-banned</code>, <code>area-50</code>, and <code>floor-2nd</code> worked together to achieve the prediction of €300,000. Our goal is to explain the difference between the actual prediction (€300,000) and the average prediction (€310,000): a difference of -€10,000.</p>
+<p>The answer could be: The <code>park-nearby</code> contributed €30,000; <code>area-50</code> contributed €10,000; <code>floor-2nd</code> contributed €0; <code>cat-banned</code> contributed -€50,000. The contributions add up to -€10,000, the final prediction minus the average predicted apartment price.</p>
+<p><strong>How do we calculate the Shapley value for one feature?</strong></p>
+<p>The Shapley value is the average marginal contribution of a feature value across all possible coalitions. All clear now?</p>
+<p><a href="#fig-shapley-instance-intervened" class="quarto-xref">Figure&nbsp;<span>17.2</span></a> shows how to calculate the marginal contribution of the <code>cat-banned</code> feature value when it is added to a coalition of <code>park-nearby</code> and <code>area-50</code>. We simulate that only <code>park-nearby</code>, <code>cat-banned</code>, and <code>area-50</code> are in a coalition by randomly drawing another apartment from the data and using its value for the floor feature. The value <code>floor-2nd</code> was replaced by the randomly drawn <code>floor-1st</code>. Then we predict the price of the apartment with this combination (€310,000). In a second step, we remove <code>cat-banned</code> from the coalition by replacing it with a random value of the cat allowed/banned feature from the randomly drawn apartment. In the example, it was <code>cat-allowed</code>, but it could have been <code>cat-banned</code> again. We predict the apartment price for the coalition of <code>park-nearby</code> and <code>area-50</code> (€320,000). The contribution of <code>cat-banned</code> was €310,000 - €320,000 = -€10,000. This estimate depends on the values of the randomly drawn apartment that served as a “donor” for the cat and floor feature values. We’ll get better estimates if we repeat this sampling step and average the contributions.</p>
+<div id="fig-shapley-instance-intervened" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-shapley-instance-intervened-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="./images/shapley-instance-intervention.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;17.2: One sample repetition to estimate the contribution of cat-banned to the prediction when added to the coalition of park-nearby and area-50."><img src="./images/shapley-instance-intervention.jpg" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-shapley-instance-intervened-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;17.2: One sample repetition to estimate the contribution of <code>cat-banned</code> to the prediction when added to the coalition of <code>park-nearby</code> and <code>area-50</code>.
+</figcaption>
+</figure>
+</div>
+<p>We repeat this computation for all possible coalitions. The Shapley value is the average of all the marginal contributions to all possible coalitions. The computation time increases exponentially with the number of features. One solution to keep the computation time manageable is to compute contributions for only a few samples of the possible coalitions.</p>
+<p><a href="#fig-shapley-coalitions" class="quarto-xref">Figure&nbsp;<span>17.3</span></a> shows all coalitions of feature values that are needed to determine the exact Shapley value for <code>cat-banned</code>. The first row shows the coalition without any feature values. The second, third, and fourth rows show different coalitions with increasing coalition size, separated by “|”. All in all, the following coalitions are possible:</p>
+<ul>
+<li><code>{}</code> (empty coalition)</li>
+<li><code>{park-nearby}</code></li>
+<li><code>{area-50}</code></li>
+<li><code>{floor-2nd}</code></li>
+<li><code>{park-nearby,area-50}</code></li>
+<li><code>{park-nearby,floor-2nd}</code></li>
+<li><code>{area-50,floor-2nd}</code></li>
+<li><code>{park-nearby,area-50,floor-2nd}</code></li>
+</ul>
+<p>For each of these coalitions, we compute the predicted apartment price with and without the feature value <code>cat-banned</code> and take the difference to get the marginal contribution. The Shapley value is the (weighted) average of all marginal contributions. We replace the feature values of features that are not in a coalition with random feature values from the apartment dataset to get a prediction from the machine learning model. If we estimate the Shapley values for all feature values, we get the complete distribution of the prediction (minus the average) among the feature values.</p>
+<div id="fig-shapley-coalitions" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-shapley-coalitions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="./images/shapley-coalitions.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;17.3: All 8 coalitions needed for computing the exact Shapley value of the cat-banned feature value"><img src="./images/shapley-coalitions.jpg" class="img-fluid figure-img" style="width:85.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-shapley-coalitions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;17.3: All 8 coalitions needed for computing the exact Shapley value of the <code>cat-banned</code> feature value
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="examples-and-interpretation" class="level2">
+<h2 class="anchored" data-anchor-id="examples-and-interpretation">Examples and interpretation</h2>
+<p>The interpretation of the Shapley value for feature <span class="math inline">\(j\)</span> is: The value of the <span class="math inline">\(j\)</span>-th feature contributed <span class="math inline">\(\phi_j\)</span> to the prediction of this particular instance compared to the average prediction for the dataset. The Shapley value works for both classification (if we are dealing with probabilities) and regression.</p>
+<p>We use the Shapley value to analyze the predictions of a random forest model predicting <a href="data.html#penguins">penguin sex</a>. <a href="#fig-shapley-penguins-plot" class="quarto-xref">Figure&nbsp;<span>17.4</span></a> shows the Shapley values for a male penguin. This penguin’s predicted P(female)=0.21 is -0.31 below the average probability for P(female) of 0.51. The bill length contributed most to the probability of being female, but most factors were (correctly) pointing to male. The sum of the contributions yields the difference between actual and average prediction (0.51).</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-shapley-penguins-plot" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-shapley-penguins-plot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="shapley_files/figure-html/fig-shapley-penguins-plot-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;17.4: Shapley values for a penguin being classified as female."><img src="shapley_files/figure-html/fig-shapley-penguins-plot-1.png" class="img-fluid figure-img" style="width:85.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-shapley-penguins-plot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;17.4: Shapley values for a penguin being classified as female.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Shapley values always need a reference dataset from which to sample the missing team members. In this case, I used all of the data points, which means all of the penguins, no matter the species. The current penguin is an Adelie penguin, and we can also compute Shapley values that only compare against other penguins of the same species. This reduces the problem of sampling and combining unrealistic values. <a href="#fig-shapley-penguins-plot-species" class="quarto-xref">Figure&nbsp;<span>17.5</span></a> shows also a different interpretation. When comparing our penguin with other Adelie penguins, then the reason why it has a low probability of being female is its body weight.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-shapley-penguins-plot-species" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-shapley-penguins-plot-species-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="shapley_files/figure-html/fig-shapley-penguins-plot-species-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;17.5: Shapley values computed only based on data from the same penguin species."><img src="shapley_files/figure-html/fig-shapley-penguins-plot-species-1.png" class="img-fluid figure-img" style="width:85.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-shapley-penguins-plot-species-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;17.5: Shapley values computed only based on data from the same penguin species.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Pick the reference data
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Shapley value interpretation is always in reference to the dataset that was used for replacing values for absent players. Make sure to pick a meaningful reference dataset.</p>
+</div>
+</div>
+<p>For the <a href="data.html#bike-data">bike rental dataset</a>, we also train a random forest to predict the number of rented bikes for a day, given weather and calendar information. The explanations created for the random forest prediction of a particular day are shown in <a href="#fig-shapley-bike-plot" class="quarto-xref">Figure&nbsp;<span>17.6</span></a>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-shapley-bike-plot" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-shapley-bike-plot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="shapley_files/figure-html/fig-shapley-bike-plot-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;17.6: Shapley values for day 285 of the bike data."><img src="shapley_files/figure-html/fig-shapley-bike-plot-1.png" class="img-fluid figure-img" style="width:85.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-shapley-bike-plot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;17.6: Shapley values for day 285 of the bike data.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>With a predicted 4945 rental bikes, this day is 422 below the average prediction of 4524. The temperature and humidity had the largest positive contributions. The low count two days before had the largest negative contribution. The sum of Shapley values yields the difference of actual and average prediction (422).</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Shapley values are not counterfactuals
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Be careful to interpret the Shapley value correctly: The Shapley value is the average contribution of a feature value to the prediction in different coalitions. The Shapley value is NOT the difference in prediction when we remove the feature from the model.</p>
+</div>
+</div>
+</section>
+<section id="shapley-value-theory" class="level2">
+<h2 class="anchored" data-anchor-id="shapley-value-theory">Shapley value theory</h2>
+<p>This section goes deeper into the definition and computation of the Shapley value for the curious reader. Skip this section and go directly to “Strengths and Limitations” if you are not interested in the technical details.</p>
+<p>We are interested in how each feature affects the prediction of a data point. In a linear model, it’s easy to calculate the individual effects. Here’s what a linear model prediction looks like for one data instance:</p>
+<p><span class="math display">\[\hat{f}(\mathbf{x})=\beta_0+\beta_{1}x_{1}+\ldots+\beta_{p}x_{p}\]</span></p>
+<p>where <span class="math inline">\(\mathbf{x}\)</span> is the instance for which we want to compute the contributions. Each <span class="math inline">\(x_j\)</span> is a feature value, with <span class="math inline">\(j = 1,\ldots,p\)</span>. The <span class="math inline">\(\beta_j\)</span> is the weight corresponding to feature <span class="math inline">\(j\)</span>.</p>
+<p>The contribution <span class="math inline">\(\phi_j\)</span> of the <span class="math inline">\(j\)</span>-th feature to the prediction <span class="math inline">\(\hat{f}(\mathbf{x})\)</span> is:</p>
+<p><span class="math display">\[\phi_j(\hat{f})=\beta_{j}x_j-\beta_{j}\mathbb{E}[X_{j}]\]</span></p>
+<p>where <span class="math inline">\(\beta_j \mathbb{E}[X_{j}]\)</span> is the mean effect estimate for feature <span class="math inline">\(j\)</span>. The contribution is the difference between the feature effect and the average effect. Nice! Now we know how much each feature contributed to the prediction. If we sum all the feature contributions for one instance, the result is the following:</p>
+<p><span class="math display">\[\begin{align*}
+\sum_{j=1}^{p}\phi_j(\hat{f})=&amp;\sum_{j=1}^p(\beta_{j}x_j- \beta_{j} \mathbb{E}[X_{j}]) \\
+=&amp;(\beta_0+\sum_{j=1}^p\beta_{j}x_j)-(\beta_0+\sum_{j=1}^p \beta_{j} \mathbb{E}[X_{j}]) \\
+=&amp;\hat{f}(\mathbf{x})-\mathbb{E}[\hat{f}(\mathbf{X})]
+\end{align*}\]</span></p>
+<p>This is the predicted value for the data point <span class="math inline">\(\mathbf{x}\)</span> minus the average predicted value. Feature contributions can be negative.</p>
+<p>Can we do the same for any type of model? It would be great to have this as a model-agnostic tool. Since we usually do not have similar weights in other model types, we need a different solution.</p>
+<p>Help comes from unexpected places: cooperative game theory. The Shapley value is a solution for computing feature contributions for single predictions for any machine learning model.</p>
+<section id="definition" class="level3">
+<h3 class="anchored" data-anchor-id="definition">Definition</h3>
+<p>The Shapley value is defined via a value function <span class="math inline">\(val\)</span> of players in <span class="math inline">\(S\)</span>.</p>
+<p>The Shapley value of a feature value is its contribution to the payout, weighted and summed over all possible feature value combinations:</p>
+<p><span class="math display">\[\phi_j(val)=\sum_{S\subseteq\{1,\ldots,p\} \setminus \{j\}}\frac{|S|!\left(p-|S|-1\right)!}{p!}\left(val\left(S\cup\{j\}\right)-val(S)\right)\]</span></p>
+<p>where <span class="math inline">\(S\)</span> is a subset of the features used in the model, <span class="math inline">\(\mathbf{x}\)</span> is the vector of feature values of the instance to be explained, and <span class="math inline">\(p\)</span> is the number of features. <span class="math inline">\(val_{\mathbf{x}}(S)\)</span> is the prediction for feature values in set <span class="math inline">\(S\)</span> that are marginalized over features <span class="math inline">\(X_C\)</span>, which are all the features not included in <span class="math inline">\(S\)</span> (<span class="math inline">\(S \cap C = \emptyset\)</span> and <span class="math inline">\(S \cup C = \{1, \ldots, p\}\)</span>):</p>
+<p><span class="math display">\[val_{\mathbf{x}}(S)=\int\hat{f}(x_{1},\ldots,x_{p})d\mathbb{P}_{X_C}-\mathbb{E}[\hat{f}(\mathbf{X})]\]</span></p>
+<p>You actually perform multiple integrations for each feature that is not contained in <span class="math inline">\(S\)</span>. A concrete example: The machine learning model works with 4 features <span class="math inline">\(X_1\)</span>, <span class="math inline">\(X_2\)</span>, <span class="math inline">\(X_3\)</span>, and <span class="math inline">\(X_4\)</span>, and we evaluate the prediction for the coalition <span class="math inline">\(S\)</span> consisting of feature values <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_3\)</span>:</p>
+<p><span class="math display">\[val_{\mathbf{x}}(S)=val_{\mathbf{x}}(\{1,3\})=\int_{\mathbb{R}}\int_{\mathbb{R}}\hat{f}(x_{1},X_{2},x_{3},X_{4})d\mathbb{P}_{X_2X_4}-\mathbb{E}[\hat{f}(\mathbf{X})]\]</span></p>
+<p>This looks similar to the feature contributions in the linear model!</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Don’t get confused by the many uses of the word “value”
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The feature value is the numerical or categorical value of a feature and instance; the Shapley value is the feature contribution to the prediction; the value function is the payout function for coalitions of players (feature values).</p>
+</div>
+</div>
+<p>The Shapley value is the only attribution method that satisfies the properties <strong>Efficiency</strong>, <strong>Symmetry</strong>, <strong>Dummy</strong>, and <strong>Additivity</strong>, which together can be considered a definition of a fair payout.</p>
+<p><strong>Efficiency</strong> The feature contributions must add up to the difference of prediction for <span class="math inline">\(\mathbf{x}\)</span> and the average.</p>
+<p><span class="math display">\[\sum\nolimits_{j=1}^p\phi_j=\hat{f}(\mathbf{x})-\mathbb{E}[\hat{f}(\mathbf{X})]\]</span></p>
+<p><strong>Symmetry</strong> The contributions of two feature values <span class="math inline">\(j\)</span> and <span class="math inline">\(k\)</span> should be the same if they contribute equally to all possible coalitions. If</p>
+<p><span class="math display">\[val(S \cup \{j\})=val(S\cup\{k\})\]</span></p>
+<p>for all</p>
+<p><span class="math display">\[S\subseteq\{1,\ldots, p\} \setminus \{j,k\}\]</span></p>
+<p>then</p>
+<p><span class="math display">\[\phi_j=\phi_{k}\]</span></p>
+<p><strong>Dummy</strong> A feature <span class="math inline">\(j\)</span> that does not change the predicted value – regardless of which coalition of feature values it is added to – should have a Shapley value of 0. If</p>
+<p><span class="math display">\[val(S\cup\{j\})=val(S)\]</span></p>
+<p>for all</p>
+<p><span class="math display">\[S\subseteq\{1,\ldots,p\}\]</span></p>
+<p>then</p>
+<p><span class="math display">\[\phi_j=0\]</span></p>
+<p><strong>Additivity</strong> For a game with combined payouts <span class="math inline">\(val + val^+\)</span> the respective Shapley values are as follows:</p>
+<p><span class="math display">\[\phi_j+\phi_j^{+}\]</span></p>
+<p>Suppose you trained a random forest, which means that the prediction is an average of many decision trees. The Additivity property guarantees that for a feature value, you can calculate the Shapley value for each tree individually, average them, and get the Shapley value for the feature value for the random forest.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Intuitive understanding of Shapley values
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The feature values enter a room in random order. All feature values in the room participate in the game (= contribute to the prediction). The Shapley value of a feature value is the average change in the prediction that the coalition already in the room receives when the feature value joins them.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="estimating-shapley-values" class="level2">
+<h2 class="anchored" data-anchor-id="estimating-shapley-values">Estimating Shapley values</h2>
+<p>All possible coalitions (sets) of feature values have to be evaluated with and without the <span class="math inline">\(j\)</span>-th feature to calculate the exact Shapley value. For more than a few features, the exact solution to this problem becomes problematic as the number of possible coalitions exponentially increases as more features are added. <span class="citation" data-cites="strumbelj2014explaining">Štrumbelj and Kononenko (<a href="references.html#ref-strumbelj2014explaining" role="doc-biblioref">2014</a>)</span> proposed an approximation with Monte-Carlo sampling:</p>
+<p><span class="math display">\[\hat{\phi}_{j} = \frac{1}{M}\sum_{m=1}^M\left(\hat{f}(\mathbf{x}^{(m)}_{+j}) - \hat{f}(\mathbf{x}^{(m)}_{-j})\right)\]</span></p>
+<p>where <span class="math inline">\(\hat{f}(\mathbf{x}^{(m)}_{+j})\)</span> is the prediction for <span class="math inline">\(\mathbf{x}\)</span>, but with a random number of feature values replaced by feature values from a random data point <span class="math inline">\(\mathbf{z}\)</span>, except for the respective value of feature <span class="math inline">\(j\)</span>. The feature vector <span class="math inline">\(\mathbf{x}^{(m)}_{-j}\)</span> is almost identical to <span class="math inline">\(\mathbf{x}^{(m)}_{+j}\)</span>, but the value <span class="math inline">\(x^{(m)}_j\)</span> is also taken from the sampled <span class="math inline">\(\mathbf{z}\)</span>. Each of these <span class="math inline">\(M\)</span> new instances is a kind of “Frankenstein’s Monster” assembled from two instances. Note that in the following algorithm, the order of features is not actually changed – each feature remains at the same vector position when passed to the predict function. The order is only used as a “trick” here: By giving the features a new order, we get a random mechanism that helps us put together the “Frankenstein’s Monster.” For features that appear left of the feature <span class="math inline">\(X_j\)</span>, we take the values from the original observations, and for the features on the right, we take the values from a random instance.</p>
+<p><strong>Approximate Shapley estimation for a single feature value</strong>:</p>
+<ul>
+<li>Output: Shapley value for the value of the <span class="math inline">\(j\)</span>-th feature</li>
+<li>Required: Number of iterations <span class="math inline">\(M\)</span>, instance of interest <span class="math inline">\(\mathbf{x}\)</span>, feature index <span class="math inline">\(j\)</span>, data matrix <span class="math inline">\(\mathbf{X}\)</span>, and machine learning model <span class="math inline">\(f\)</span></li>
+<li>For all <span class="math inline">\(m = 1,\ldots,M\)</span>:
+<ul>
+<li>Draw random instance <span class="math inline">\(\mathbf{z}\)</span> from the data matrix <span class="math inline">\(\mathbf{X}\)</span></li>
+<li>Choose a random permutation <span class="math inline">\(\mathbf{o}\)</span> of the feature values</li>
+<li>Order instance <span class="math inline">\(\mathbf{x}\)</span>: <span class="math inline">\(\mathbf{x}_{\mathbf{o}}=(x_{(1)},\ldots,x_{(j)},\ldots,x_{(p)})\)</span></li>
+<li>Order instance <span class="math inline">\(\mathbf{z}\)</span>: <span class="math inline">\(\mathbf{z}_{\mathbf{o}}=(z_{(1)},\ldots,z_{(j)},\ldots,z_{(p)})\)</span></li>
+<li>Construct two new instances
+<ul>
+<li>With <span class="math inline">\(j\)</span>: <span class="math inline">\(\mathbf{x}_{+j}=(x_{(1)},\ldots,x_{(j-1)},x_{(j)},z_{(j+1)},\ldots,z_{(p)})\)</span></li>
+<li>Without <span class="math inline">\(j\)</span>: <span class="math inline">\(\mathbf{x}_{-j}=(x_{(1)},\ldots,x_{(j-1)},z_{(j)},z_{(j+1)},\ldots,z_{(p)})\)</span></li>
+</ul></li>
+<li>Compute marginal contribution: <span class="math inline">\(\phi_j^{(m)}=\hat{f}(\mathbf{x}_{+j})-\hat{f}(\mathbf{x}_{-j})\)</span></li>
+</ul></li>
+<li>Compute Shapley value as the average: <span class="math inline">\(\phi_j(\mathbf{x}) = \frac{1}{M}\sum_{m=1}^M\phi_j^{(m)}\)</span></li>
+</ul>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Reduce sample size for speed
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Consider using a smaller sample size <span class="math inline">\(M\)</span> when estimating Shapley values to reduce computation time, but beware of increased variance in the estimate.</p>
+</div>
+</div>
+<p>The procedure has to be repeated for each of the features to get all Shapley values. In the <a href="shap.html">SHAP chapter</a>, we will see other efficient ways to estimating Shapley values.</p>
+</section>
+<section id="strengths" class="level2">
+<h2 class="anchored" data-anchor-id="strengths">Strengths</h2>
+<p>The difference between the prediction and the average prediction is <strong>fairly distributed</strong> among the feature values of the instance – the Efficiency property of Shapley values. This property distinguishes the Shapley value from other methods such as <a href="lime.html">LIME</a>. LIME does not guarantee that the prediction is fairly distributed among the features. The Shapley values deliver a <strong>full explanation</strong>.</p>
+<p>The Shapley value allows <strong>contrastive explanations</strong>. Instead of comparing a prediction to the average prediction of the entire dataset, you could compare it to a subset or even to a single data point. This contrastiveness is also something that local models like LIME do not have.</p>
+<p>The Shapley value is the only explanation method with a <strong>solid theory</strong>. The axioms – efficiency, symmetry, dummy, additivity – give the explanation a reasonable foundation. Methods like LIME assume linear behavior of the machine learning model locally, but there is no theory as to why this should work.</p>
+</section>
+<section id="limitations" class="level2">
+<h2 class="anchored" data-anchor-id="limitations">Limitations</h2>
+<p>The Shapley value requires <strong>a lot of computing time</strong>. In 99.9% of real-world problems, only the approximate solution is feasible. An exact computation of the Shapley value is computationally expensive because there are 2<sup>k</sup> possible coalitions of the feature values and the “absence” of a feature has to be simulated by drawing random instances, which increases the variance for the estimate of the Shapley values estimation. The exponential number of the coalitions is dealt with by sampling coalitions and limiting the number of iterations M. Decreasing M reduces computation time, but increases the variance of the Shapley value. There’s no good rule of thumb for the number of iterations M. M should be large enough to accurately estimate the Shapley values, but small enough to complete the computation in a reasonable time. It should be possible to choose M based on Chernoff bounds, but I have not seen any paper on doing this for Shapley values for machine learning predictions.</p>
+<p>The Shapley value <strong>can be misinterpreted</strong>. The Shapley value of a feature value is not the difference of the predicted value after removing the feature from the model training. The interpretation of the Shapley value is: Given the current set of feature values, the contribution of a feature value to the difference between the actual prediction and the mean prediction is the estimated Shapley value.</p>
+<p>Shapley value explanations <strong>are not to be interpreted as local in the sense of gradients or neighborhood.</strong> <span class="citation" data-cites="bilodeau2024impossibility">(<a href="references.html#ref-bilodeau2024impossibility" role="doc-biblioref">Bilodeau et al. 2024</a>)</span> For example, a positive Shapley value doesn’t mean that increasing the feature would increase the prediction. Instead, the Shapley value has to be interpreted with respect to the reference dataset that was used for the estimation. That’s why I would also recommend pairing Shapley values with, for example, <a href="ceteris-paribus.html">ceteris paribus plots</a> or <a href="ice.html">ICE plots</a>, so you get the full picture.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Combine with ceteris paribus and ICE
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Pair Shapley values with ceteris paribus or ICE plots to get a sense of local sensitivity to feature changes.</p>
+</div>
+</div>
+<p>The Shapley value is the wrong explanation method if you seek sparse explanations (explanations that contain few features). Explanations created with the Shapley value method <strong>use all the features</strong>. Humans prefer selective explanations, such as those produced by LIME. LIME might be the better choice for explanations laypersons have to deal with. Another solution is <a href="https://github.com/slundberg/shap">SHAP</a> introduced by <span class="citation" data-cites="lundberg2017unified">Lundberg and Lee (<a href="references.html#ref-lundberg2017unified" role="doc-biblioref">2017</a>)</span>, which is based on the Shapley value but can also provide explanations with few features.</p>
+<p>The Shapley value returns a simple value per feature, but <strong>no prediction model</strong> like LIME. This means it cannot be used to make statements about changes in prediction for changes in the input, such as: “If I were to earn €300 more a year, my credit score would increase by 5 points.”</p>
+<p>Like many other permutation-based interpretation methods, the Shapley value method suffers from <strong>inclusion of unrealistic data instances</strong> when features are correlated. To simulate that a feature value is missing from a coalition, we marginalize the feature. This is achieved by sampling values from the feature’s marginal distribution. This is fine as long as the features are independent. When features are dependent, then we might sample feature values that do not make sense for this instance. But we would use those to compute the feature’s Shapley value. One solution might be to permute correlated features together and get one mutual Shapley value for them. Another adaptation is conditional sampling: Features are sampled conditional on the features that are already in the team. While conditional sampling fixes the issue of unrealistic data points, a new issue is introduced: The resulting values are no longer the Shapley values to our game, since they violate the symmetry axiom, as found out by <span class="citation" data-cites="sundararajan2020many">Sundararajan and Najmi (<a href="references.html#ref-sundararajan2020many" role="doc-biblioref">2020</a>)</span> and further discussed by <span class="citation" data-cites="janzing2020feature">Janzing, Minorics, and Blöbaum (<a href="references.html#ref-janzing2020feature" role="doc-biblioref">2020</a>)</span>.</p>
+</section>
+<section id="software-and-alternatives" class="level2">
+<h2 class="anchored" data-anchor-id="software-and-alternatives">Software and alternatives</h2>
+<p>Shapley values are implemented in both the <code>iml</code> and <a href="https://github.com/bgreenwell/fastshap">fastshap</a> packages for R. In Julia, you can use <a href="https://gitlab.com/ExpandingMan/Shapley.jl">Shapley.jl</a>.</p>
+<p>SHAP, an alternative estimation method and ecosystem for Shapley values, is presented in the <a href="shap.html">next chapter</a>.</p>
+<p>Another approach is called breakDown, which is implemented in the <code>breakDown</code> R package <span class="citation" data-cites="staniak2018explanationsa">(<a href="references.html#ref-staniak2018explanationsa" role="doc-biblioref">Staniak and Biecek 2018</a>)</span>. BreakDown also shows the contributions of each feature to the prediction but computes them step by step. Let’s reuse the game analogy: We start with an empty team, add the feature value that would contribute the most to the prediction and iterate until all feature values are added. How much each feature value contributes depends on the respective feature values that are already in the “team”, which is the big drawback of the breakDown method. It’s faster than the Shapley value method, and for models without interactions, the results are the same.</p>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-bilodeau2024impossibility" class="csl-entry" role="listitem">
+Bilodeau, Blair, Natasha Jaques, Pang Wei Koh, and Been Kim. 2024. <span>“Impossibility <span>Theorems</span> for <span>Feature Attribution</span>.”</span> <em>Proceedings of the National Academy of Sciences</em> 121 (2): e2304406120. <a href="https://doi.org/10.1073/pnas.2304406120">https://doi.org/10.1073/pnas.2304406120</a>.
+</div>
+<div id="ref-janzing2020feature" class="csl-entry" role="listitem">
+Janzing, Dominik, Lenon Minorics, and Patrick Blöbaum. 2020. <span>“Feature Relevance Quantification in Explainable AI: A Causal Problem.”</span> In <em>International Conference on Artificial Intelligence and Statistics</em>, 2907–16. PMLR.
+</div>
+<div id="ref-lundberg2017unified" class="csl-entry" role="listitem">
+Lundberg, Scott M., and Su-In Lee. 2017. <span>“A Unified Approach to Interpreting Model Predictions.”</span> In <em>Proceedings of the 31st <span>International Conference</span> on <span>Neural Information Processing Systems</span></em>, 4768–77. <span>NIPS</span>’17. Red Hook, NY, USA: Curran Associates Inc.
+</div>
+<div id="ref-shapley1953value" class="csl-entry" role="listitem">
+Shapley, Lloyd S. 1953. <span>“A Value for n-Person Games.”</span> <em>Contribution to the Theory of Games</em> 2.
+</div>
+<div id="ref-staniak2018explanationsa" class="csl-entry" role="listitem">
+Staniak, Mateusz, and Przemyslaw Biecek. 2018. <span>“Explanations of Model Predictions with Live and <span class="nocase">breakDown</span> Packages.”</span> arXiv. <a href="https://doi.org/10.48550/arXiv.1804.01955">https://doi.org/10.48550/arXiv.1804.01955</a>.
+</div>
+<div id="ref-strumbelj2014explaining" class="csl-entry" role="listitem">
+Štrumbelj, Erik, and Igor Kononenko. 2014. <span>“Explaining Prediction Models and Individual Predictions with Feature Contributions.”</span> <em>Knowledge and Information Systems</em> 41 (3): 647–65. <a href="https://doi.org/10.1007/s10115-013-0679-x">https://doi.org/10.1007/s10115-013-0679-x</a>.
+</div>
+<div id="ref-sundararajan2020many" class="csl-entry" role="listitem">
+Sundararajan, Mukund, and Amir Najmi. 2020. <span>“The <span>Many Shapley Values</span> for <span>Model Explanation</span>.”</span> In <em>Proceedings of the 37th <span>International Conference</span> on <span>Machine Learning</span></em>, 9269–78. PMLR. <a href="https://proceedings.mlr.press/v119/sundararajan20b.html">https://proceedings.mlr.press/v119/sundararajan20b.html</a>.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./anchors.html" class="pagination-link" aria-label="Scoped Rules (Anchors)">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Scoped Rules (Anchors)</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./shap.html" class="pagination-link" aria-label="SHAP">
+        <span class="nav-page-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">SHAP</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p><a href="privacy-policy.html" target="_blank" style="font-size:11px;"> Privacy Policy </a> | <a href="https://christophmolnar.com/impressum" target="_blank" style="font-size:11px"> Impressum </a></p>
+<div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/christophM/interpretable-ml-book/blob/main/shapley.qmd" class="toc-action"><i class="bi bi-github"></i>View source</a></li><li><a href="https://github.com/christophM/interpretable-ml-book/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div><div class="cookie-consent-footer"><a href="#" id="open_preferences_center">Cookie Preferences</a></div></div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
